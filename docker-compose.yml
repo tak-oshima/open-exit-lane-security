@@ -1,0 +1,7 @@
+version: '3.9'
+
+services:
+  bg_sub:
+    build: .
+    volumes:
+      - '.:/app'
