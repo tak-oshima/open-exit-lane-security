@@ -1,5 +1,5 @@
 from __future__ import print_function
-from sort.sort import *
+from sort import *
 import cv2 as cv
 import argparse
 import numpy as np
