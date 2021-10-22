@@ -68,7 +68,7 @@ def refineFGMask(fgMask):
 def main():
     parser = argparse.ArgumentParser(description='This program shows how to use background subtraction methods provided by \
                                                 OpenCV. You can process both videos and images.')
-    parser.add_argument('--input', type=str, help='Path to a video or a sequence of image.', default='./assets/vtest.avi')
+    parser.add_argument('--input', type=str, help='Path to a video or a sequence of image.', default='camera')
     parser.add_argument('--detector', type=str, help='Background subtraction method (MOG, MOG2, GMG, KNN).', default='MOG2')
     parser.add_argument('--tracker', type=str, help='Tracking metod (BOOSTING, MIL, KCF, TLD, MEDIANFLOW, GOTURN, MOSSE, CSRT).', default='CSRT')
     args = parser.parse_args()
@@ -79,8 +79,12 @@ def main():
     mot_tracker = Sort(max_age=10000, min_hits=3, iou_threshold=0.001)
     trajectories = {}
 
-    # Read video from file
-    capture = cv.VideoCapture(cv.samples.findFileOrKeep(args.input))
+    # Read video from camera or file
+    if args.input == 'camera':
+        capture = cv.VideoCapture(0)
+    else:
+        capture = cv.VideoCapture(cv.samples.findFileOrKeep(args.input))
+
     if not capture.isOpened():
         print('Unable to open: ' + args.input)
         exit(0)
