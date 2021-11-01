@@ -4,6 +4,8 @@ Open Exit Lane Security Breach Control is a Python program for detecting objects
 
 ## Installation
 
+Make sure you are running Python 3.7 or above.
+
 Clone the project repository to your local machine.
 
 ```bash
@@ -35,7 +37,7 @@ $ .\env\Scripts\activate
 Use the package manager [pip](https://pip.pypa.io/en/stable/) to install dependencies listed in reqirements.txt.
 
 ```bash
-pip install -r requirements.txt
+$ pip install -r requirements.txt
 ```
 
 ## Usage
@@ -47,7 +49,7 @@ optional arguments:
 
 ```bash
 # Example usage
-python bg_sub.py --input assets/people.mp4 --detector MOG2
+$ python bg_sub.py --input assets/people.mp4 --detector MOG2
 ```
 
 ## Contributing
