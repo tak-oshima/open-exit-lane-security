@@ -49,7 +49,7 @@ $ python bg_sub.py --input assets/people.mp4 --detector MOG2
 '''
 optional arguments:
   -h, --help           show this help message and exit
-  --input INPUT        Path to a video or a sequence of image.
+  --input INPUT        Path to a video or a sequence of image. Default is video device.
   --detector DETECTOR  Background subtraction method (MOG, MOG2, GMG, KNN).
 '''
 ```
