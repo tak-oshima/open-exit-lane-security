@@ -42,12 +42,14 @@ $ pip install -r requirements.txt
 
 ## Usage
 
+```bash
+'''
 optional arguments:
   -h, --help           show this help message and exit
   --input INPUT        Path to a video or a sequence of image.
   --detector DETECTOR  Background subtraction method (MOG, MOG2, GMG, KNN).
+'''
 
-```bash
 # Example usage
 $ python bg_sub.py --input assets/people.mp4 --detector MOG2
 ```
