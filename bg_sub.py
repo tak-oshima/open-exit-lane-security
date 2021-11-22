@@ -71,6 +71,7 @@ def main():
     parser.add_argument('--input', type=str, help='Path to a video or a sequence of image.', default='camera')
     parser.add_argument('--detector', type=str, help='Background subtraction method (MOG, MOG2, GMG, KNN).', default='MOG2')
     parser.add_argument('--tracker', type=str, help='Tracking metod (BOOSTING, MIL, KCF, TLD, MEDIANFLOW, GOTURN, MOSSE, CSRT).', default='CSRT')
+    parser.add_argument('--size', type=int, help='Minumum size of object to be detected (pixel^2).', default=300)
     args = parser.parse_args()
 
     # Assign algorithms
@@ -98,10 +99,12 @@ def main():
     while True:
         detections = []
         ret, frame = capture.read()
-        if frame is None:
-            break
 
-        frame = cv.resize(frame, (int(width * scale), int(height * scale)), interpolation=cv.INTER_AREA)
+        # Skip over broken frame
+        if frame is None:
+            continue
+
+        # frame = cv.resize(frame, (int(width * scale), int(height * scale)), interpolation=cv.INTER_AREA)
         fgMask = backSub.apply(frame)
         if args.detector == 'GMG':
             fgMask = cv.morphologyEx(fgMask, cv.MORPH_OPEN, kernel)
@@ -109,26 +112,12 @@ def main():
         mask = refineFGMask(fgMask)
         contours= cv.findContours(mask, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
         contours = imutils.grab_contours(contours)
+
         for cnt in contours:
             area = cv.contourArea(cnt)
-            if area > 300:
+            if area > args.size:
                 x, y, w, h = cv.boundingRect(cnt)
                 detections.append([x, y, x + w, y + h, 1])
-
-                # Countour Approximation
-                # epsilon = 0.1 * cv.arcLength(cnt, True)
-                # approx = cv.approxPolyDP(cnt, epsilon, True)
-
-                # Convex Hull
-                # hull = cv.convexHull(cnt)
-
-                # Draw raw contours
-                # cv.drawContours(frame, [hull], -1, (0, 255, 0), 1)
-
-                # Moments
-                # moments = cv.moments(cnt)
-                # cx = int(moments['m10']/moments['m00'])
-                # cy = int(moments['m01']/moments['m00'])
 
         # Pre-process detections and update SORT tracker
         detections = np.array(detections) if detections else np.array(np.empty((0, 5)))
@@ -139,7 +128,7 @@ def main():
             if id in trajectories.keys():
                 trajectories[id].append((cx, cy))
             else:
-                trajectories[id] = [(cx, cy)]
+                trajectories[id] = []   # not recording initial position because of buggy behavior of SORT
 
             # Draw bounding boxes and IDs
             cv.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), BB_COLORS[int(id % 13)], 2)
@@ -147,18 +136,19 @@ def main():
             cv.circle(frame, (cx, cy), 1, BB_COLORS[int(id % 13)], 2)
 
             # Draw trajectories
-            prev_point = trajectories[id][0]
-            for point in trajectories[id]:
-                cv.line(frame, prev_point, point, thickness=1, color=BB_COLORS[int(id % 13)], shift=0, lineType=cv.LINE_AA)
-                prev_point = point
+            for i in range(len(trajectories[id])):
+                if i > 50:
+                    break
+                idx = len(trajectories[id]) - i - 1
+                cv.circle(frame, center=trajectories[id][idx], radius=int(10 * (1 - i / 50)), color=BB_COLORS[int(id % 13)], thickness=-1, lineType=cv.LINE_AA)
         
         cv.rectangle(frame, (10, 2), (100, 20), (255, 255, 255), -1)
         cv.putText(frame, str(capture.get(cv.CAP_PROP_POS_FRAMES)), (15, 15), cv.FONT_HERSHEY_SIMPLEX, 0.45 , (0, 0, 0))
         
-
-        cv.imshow('Frame', frame)
-        cv.moveWindow('Frame', 0, int(height * scale + 28))
         cv.imshow('FG Mask', mask)
+        cv.imshow('Frame', frame)
+        # cv.moveWindow('FG Mask', 0, int(height * scale + 28))
+        
         
         keyboard = cv.waitKey(15)
         if keyboard == 'q' or keyboard == 27:
