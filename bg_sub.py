@@ -22,6 +22,9 @@ BB_COLORS = [
     (240, 29, 198)
 ]
 
+BREACH_HISTORY = 10
+BREACH_SENSITIVITY = 0.5
+
 def selectBGS(name):
     if name == 'MOG':
         subtr = cv.bgsegm.createBackgroundSubtractorMOG()
@@ -72,6 +75,7 @@ def main():
     parser.add_argument('--detector', type=str, help='Background subtraction method (MOG, MOG2, GMG, KNN).', default='MOG2')
     parser.add_argument('--tracker', type=str, help='Tracking metod (BOOSTING, MIL, KCF, TLD, MEDIANFLOW, GOTURN, MOSSE, CSRT).', default='CSRT')
     parser.add_argument('--size', type=int, help='Minumum size of object to be detected (pixel^2).', default=300)
+    parser.add_argument('--breach-dir', type=str, help='Direction that triggers a security breach (left, right).', default='right')
     args = parser.parse_args()
 
     # Assign algorithms
@@ -79,6 +83,7 @@ def main():
     tracker = selectSOT(args.tracker)
     mot_tracker = Sort(max_age=10000, min_hits=3, iou_threshold=0.001)
     trajectories = {}
+    breach_dir = 1 if args.breach_dir == 'right' else -1
 
     # Read video from camera or file
     if args.input == 'camera':
@@ -130,17 +135,28 @@ def main():
             else:
                 trajectories[id] = []   # not recording initial position because of buggy behavior of SORT
 
-            # Draw bounding boxes and IDs
-            cv.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), BB_COLORS[int(id % 13)], 2)
-            cv.putText(frame, str(int(id)), (int(x1), int(y1 - 5)), cv.FONT_HERSHEY_SIMPLEX, 0.5, BB_COLORS[int(id % 13)], 2)
-            cv.circle(frame, (cx, cy), 1, BB_COLORS[int(id % 13)], 2)
+            # Calculate breach confidence
+            breach_confidence = 0
+            if len(trajectories[id]) > BREACH_HISTORY:
+                for i in range(len(trajectories[id]) - BREACH_HISTORY, len(trajectories[id])):
+                    if trajectories[id][i][0] * breach_dir > trajectories[id][i - 1][0] * breach_dir:
+                        breach_confidence += 1
 
-            # Draw trajectories
+            # color = (0, 0, 255) if breach_confidence > 7 else BB_COLORS[int(id % 13)]
+            color = (0, 0, 255) if breach_confidence > BREACH_HISTORY * BREACH_SENSITIVITY else (0, 255, 0)
+            text = 'ALERT' if breach_confidence > BREACH_HISTORY * BREACH_SENSITIVITY else ''
+
+            # Draw bounding box and ID
+            cv.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), color, 2)
+            cv.putText(frame, text, (int(x1), int(y1 - 5)), cv.FONT_HERSHEY_SIMPLEX, 0.75, color, 2)
+
+            # Draw trajectory
             for i in range(len(trajectories[id])):
-                if i > 50:
+                if i == 50:
                     break
                 idx = len(trajectories[id]) - i - 1
-                cv.circle(frame, center=trajectories[id][idx], radius=int(10 * (1 - i / 50)), color=BB_COLORS[int(id % 13)], thickness=-1, lineType=cv.LINE_AA)
+                cv.circle(frame, center=trajectories[id][idx], radius=int(10 * (1 - i / 50)), color=color, thickness=-1, lineType=cv.LINE_AA)
+
         
         cv.rectangle(frame, (10, 2), (100, 20), (255, 255, 255), -1)
         cv.putText(frame, str(capture.get(cv.CAP_PROP_POS_FRAMES)), (15, 15), cv.FONT_HERSHEY_SIMPLEX, 0.45 , (0, 0, 0))
