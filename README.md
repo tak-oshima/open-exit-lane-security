@@ -52,7 +52,7 @@ optional arguments:
   --input INPUT        path to a video or a sequence of image. Default is video device.
   --detector DETECTOR  background subtraction method (MOG, MOG2, GMG, KNN).
   --size SIZE          minimum pixel area of object to be detected.
-  --breach-rir DIR     direction of security breach detection.
+  --breach-dir DIR     direction of security breach detection.
 '''
 ```
 
