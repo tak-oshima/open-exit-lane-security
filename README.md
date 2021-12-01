@@ -48,9 +48,11 @@ $ python bg_sub.py --input assets/people.mp4 --detector MOG2
 
 '''
 optional arguments:
-  -h, --help           show this help message and exit
-  --input INPUT        Path to a video or a sequence of image. Default is video device.
-  --detector DETECTOR  Background subtraction method (MOG, MOG2, GMG, KNN).
+  -h, --help           show this help message and exit.
+  --input INPUT        path to a video or a sequence of image. Default is video device.
+  --detector DETECTOR  background subtraction method (MOG, MOG2, GMG, KNN).
+  --size SIZE          minimum pixel area of object to be detected.
+  --breach-rir DIR     direction of security breach detection.
 '''
 ```
 
